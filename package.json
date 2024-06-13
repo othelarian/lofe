@@ -1,0 +1,27 @@
+{
+  "name": "lofe",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/othelarian/lofe.git"
+  },
+  "author": "othelarian",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/othelarian/lofe/issues"
+  },
+  "homepage": "https://github.com/othelarian/lofe#readme",
+  "description": "",
+  "devDependencies": {
+    "@othelarian/livescript": "^1.0.3",
+    "bach": "^2.0.1",
+    "chokidar": "^3.6.0",
+    "express": "^4.19.2",
+    "lucide-static": "^0.390.0",
+    "sass": "^1.77.4"
+  }
+}

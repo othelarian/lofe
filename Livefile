@@ -1,0 +1,38 @@
+# CONFIG #########################################
+
+global.config = require './config.default' .cfg
+
+try
+  cstm = require './config' .cfg
+  config.chok['config.ls'] = type: \cfg
+  for key, value of ctsm then config.projects[key] = value
+catch
+  if e.code is \MODULE_NOT_FOUND then console.log 'no custom config'
+  else throw e
+
+# OPTIONS ########################################
+
+option \all, \a, \Boolean, 'only for `compile`, force to compile all lofe file'
+option \dev, \d, \Boolean, 'only for `compile`, activate dev mode'
+option \sel, \s, 'String | [String]', 'only for `compile`, if none then `default`'
+
+# TASKS ##########################################
+
+task \clean, 'remove the `dist` dir', ->
+  require \fs .rmSync \dist, { recursive: yes, force: yes }
+
+task \compile, 'compile the selected (basic if none) lofe file', (opts) ->
+  if opts.all? then console.log 'going to compile all'
+  else
+    if opts.sel?
+      unless typeof! opts.sel is \Array then opts.sel = [opts.sel]
+    else opts.sel = <[default]>
+    np = {}; keys = Object.keys config.projects
+    for sel in opts.sel
+      unless sel in keys then throw "[ERROR]: `#sel` isnt a project!"
+      else np[sel] = config.projects[sel]
+    config.projects = np
+  require './compile' .compile opts
+
+task \list, 'list all lofe files configured and ready to be compile' ->
+  for key, val of config.projects then console.log "#key => #{val.desc}"
