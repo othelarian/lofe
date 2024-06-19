@@ -4,8 +4,14 @@ export cfg =
   projects:
     default:
       desc: 'default version of Lofe'
-      fonts: <[moon sun]>
-      out:
-        'default.html': 'default.ls'
+      #fonts:
+      #  'src/default.ls': <[moon sun]>
+      type: \mono
       src:
-        'default.ls': {type: \core, out: 'default.html'}
+        'src/default.ls': {type: \core, out: 'default.html'}
+        'src/style.sass': {type: \sass, link: 'src/default.ls'}
+        #'a/lib.ls': {type: \lib, link: 'src/default.ls', id: 'an-id'}
+    ghpages:
+      desc: ''
+      type: \mono
+      src: {}

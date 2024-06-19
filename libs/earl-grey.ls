@@ -57,6 +57,14 @@ export class EarlGrey
   bag: (...children) ->
     for child, idx in children then @push child
     @
+  inflate: ->
+    #
+    # TODO: create the dom structure
+    #
+    # TODO: add children
+    #
+    throw 'inflate not ready'
+    #
   insert: (index, tag) ->
     unless tag instanceof EarlGrey or typeof! tag is \String
       throw new Error "This is not a EarlGrey Object or a String!"

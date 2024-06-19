@@ -17,11 +17,17 @@
   "homepage": "https://github.com/othelarian/lofe#readme",
   "description": "",
   "devDependencies": {
+    "@browserify/uglifyify": "^6.0.0",
     "@othelarian/livescript": "^1.0.3",
     "bach": "^2.0.1",
+    "browser-pack-flat": "^3.5.0",
+    "browserify": "^17.0.0",
     "chokidar": "^3.6.0",
+    "common-shakeify": "^1.1.2",
     "express": "^4.19.2",
     "lucide-static": "^0.390.0",
-    "sass": "^1.77.4"
+    "minify-stream": "^2.1.0",
+    "sass": "^1.77.4",
+    "through": "^2.3.8"
   }
 }

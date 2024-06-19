@@ -15,6 +15,7 @@ catch
 option \all, \a, \Boolean, 'only for `compile`, force to compile all lofe file'
 option \dev, \d, \Boolean, 'only for `compile`, activate dev mode'
 option \sel, \s, 'String | [String]', 'only for `compile`, if none then `default`'
+option \rel, \r, \Boolean, 'only for release purpose, compress browserified'
 
 # TASKS ##########################################
 
@@ -29,10 +30,15 @@ task \compile, 'compile the selected (basic if none) lofe file', (opts) ->
     else opts.sel = <[default]>
     np = {}; keys = Object.keys config.projects
     for sel in opts.sel
-      unless sel in keys then throw "[ERROR]: `#sel` isnt a project!"
+      unless sel in keys then throw new Error "[ERROR]: '#sel' isnt a project!"
       else np[sel] = config.projects[sel]
     config.projects = np
-  require './compile' .compile opts
+  config.dev = if opts.dev? then opts.dev else no
+  config.release = if opts.rel then opts.rel else no
+  require './compile' .compile!
 
-task \list, 'list all lofe files configured and ready to be compile' ->
+task \list, 'list all lofe files configured and ready to be compile', ->
   for key, val of config.projects then console.log "#key => #{val.desc}"
+
+task \serve, 'just launch the server', ->
+  require './compile' .serve!
