@@ -1,7 +1,7 @@
 # REQUIRES #######################################
 
 require! {
-  fs, path, sass
+  bach, fs, path, sass
   '@othelarian/livescript': ls
 }
 
@@ -46,6 +46,8 @@ create-dir = (dir, cb) !-->
   if er?
     unless er.code is \EEXIST then cb er else cb void 1
 
+err-cb = (err) !-> if err? then console.log err
+
 execute = (project, target, cfg, cb) !-->>
   try
     out = switch cfg.type
@@ -79,6 +81,7 @@ execute = (project, target, cfg, cb) !-->>
           clear-cache "./#target"
           require "./#target" .generate core-cfg .to-string!
             |> fs.writeFileSync "./dist/#{cfg.out}", _
+          console.log "[OUT](#{new Date!toLocaleString!}): #{cfg.out}"
         else # if not core, update the project 'out' config
           switch cfg.type
             | \content
@@ -90,9 +93,11 @@ execute = (project, target, cfg, cb) !-->>
               void
               #
             | \lib
-              config.projects[project].cfg[cfg.link].script[cfg.id] = out
+              for lk in cfg.link
+                config.projects[project].cfg[lk].script[cfg.id] = out
             | \sass
-              config.projects[project].cfg[cfg.link].style[target] = out
+              for lk in cfg.link
+                config.projects[project].cfg[lk].style[target] = out
       | _
         msg = "[ERROR]: missing type in project '#project'"
         throw new Error msg
@@ -116,14 +121,14 @@ setup-prj = (prj) ->
   config.projects[prj].cfg = {}
   prep = []
   out = []
-  for fl, cfg of config.projects[prj].src
+  for fl, cfg of config.projects[prj]src
     p = execute prj, fl, cfg
     if cfg.type is \core
-      config.projects[prj].cfg[fl] =
+      config.projects[prj]cfg[fl] =
         script: {}, style: {}, content: {}, title: cfg.title ? 'No title'
       out.push p
     else prep.push p
-    config.chok[fl] = type: cfg.type
+    config.chok[fl] = type: cfg.type, project: prj
   prep.concat out
 
 watch = (cb) !->
@@ -141,12 +146,15 @@ watch = (cb) !->
       #
       #
     else if pth in watchlist
-      #
-      # TODO: launch the appropriate process
-      #
       console.log "reload #pth"
-      #
-      #
+      prj = config.chok[pth]project
+      cfg = config.projects[prj]src[pth]
+      m = [execute prj, pth, cfg]
+      unless config.chok[pth]type is \core
+        console.log "=> link: #{cfg.link}"
+        for lk in cfg.link
+          m.push(execute prj, lk, config.projects[prj]src[lk])
+      (bach.series m) err-cb
     else console.log "[ERROR]: WATCHER => #pth not find in watchlist!"
   cb void 3
 
@@ -155,14 +163,8 @@ watch = (cb) !->
 export compile = !->
   actions = [ create-dir \./dist ]
   for prj of config.projects then actions = actions.concat(setup-prj prj)
-  if config.dev
-    #
-    # TODO: get back the server after getting watcher ok
-    #
-    actions.push watch#; actions.push serve
-    #
-  (err) <- (require 'bach' .series actions)
-  if err? then console.log err
+  if config.dev then actions.push watch; actions.push serve
+  (bach.series actions) err-cb
 
 export serve = !->
   require! express

@@ -8,23 +8,18 @@ app-tags = <[
   body button defs div head meta script style svg textarea title
 ]>
 EG = core.EG
+q-sel = core.q-sel
 
 # INTERNALS ######################################
 # EXPORTS ########################################
 
 export generate = (cfg = void) ->
   unless cfg? # if not first compilation, get data
-    #
-    # TODO: retrieve config data from the page
-    #
-    core.retrieve-head!
-    #
-    cfg = {}
-    #
+    cfg = core.retrieve-head!
+    cfg.icons = q-sel '#lofe-icons defs' .innerHTML
   else cfg.tags = app-tags
   icons-attrs =
-    xmlns: \http://www.w3.org/2000/svg
-    width: 0, height: 0, id: \lofe-icons
+    xmlns: \http://www.w3.org/2000/svg width: 0, height: 0, id: \lofe-icons
   cfg.gen-body = (data) ->
     EG.body onload: 'app.init()' .bag do
       EG.svg icons-attrs .bag do
@@ -38,24 +33,20 @@ export generate = (cfg = void) ->
         EG.textarea!
         #
       #
-    #
   core.generate cfg
 
 # APP ############################################
 
 window.app =
   dl: !->
-    #
-    # TODO: trigger the download of the modify version
-    #
-    console.log 'launch dl'
-    #
-    # TODO: retrieve-head is already in generate
-    #
-    console.log core.retrieve-head!
-    #
-    #
-    #generate!
-    #
+    a = generate!to-string!
+    attrs =
+      href: 'data:text/html;charset:utf-8,' + encodeURIComponent a
+      download: 'lofe-default.html'
+    e = document.createElement \a
+    for k, v of attrs then e.setAttribute k, v
+    document.body.appendChild e
+    e.click!
+    document.body.removeChild e
   init: !->
     core.init-EG {tags: app-tags}

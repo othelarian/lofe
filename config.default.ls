@@ -12,7 +12,7 @@ export cfg =
           type: \core, out: 'default.html', title: 'Lofe - default'
           #externals: []
           icons: <[Moon Sun]>
-        'src/style.sass': {type: \sass, link: 'src/default.ls'}
+        'src/style.sass': {type: \sass, link: ['src/default.ls']}
         #'a/lib.ls': {type: \lib, link: 'src/default.ls', id: 'an-id'}
       content: {}
         #
