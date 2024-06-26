@@ -47,6 +47,7 @@ export class EarlGrey
       else throw new Error "bad argument: arg #{idx + 2}"
     new EarlGrey \tag, name, attrs, children
   # attributes ###############
+  @no-auto-close = <[script textarea]>
   # methods ##################
   clean: -> @children = []; @
   delete: (index) ->
@@ -95,6 +96,6 @@ export class EarlGrey
       else ''
     for key, val of @attrs then r ++= " #key=\"#val\""
     ed =
-      if @children.length is 0 then '/>'
+      if @children.length is 0 and not @name in EarlGrey.no-auto-close then '/>'
       else '>' ++ (@children.map hdl).join('') ++ "</#{@name}>"
     r ++ ed

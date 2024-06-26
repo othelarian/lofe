@@ -5,7 +5,7 @@ core = require '../libs/core'
 # DEFS ###########################################
 
 app-tags = <[
-  body button defs div head meta script style textarea title
+  body button defs div head meta script style svg textarea title
 ]>
 EG = core.EG
 
@@ -15,25 +15,23 @@ EG = core.EG
 export generate = (cfg = void) ->
   unless cfg? # if not first compilation, get data
     #
-    # TODO
+    # TODO: retrieve config data from the page
+    #
+    core.retrieve-head!
     #
     cfg = {}
     #
   else cfg.tags = app-tags
+  icons-attrs =
+    xmlns: \http://www.w3.org/2000/svg
+    width: 0, height: 0, id: \lofe-icons
   cfg.gen-body = (data) ->
-    #
-    # TODO
-    #
     EG.body onload: 'app.init()' .bag do
-      #
-      #
-      EG.div {class: \lofe-menu } .bag do
-        #
-        # TODO: menu
-        #
-        EG.button!push 'DL'
-        #
-      EG.div {class: \lofe-body } .bag do
+      EG.svg icons-attrs .bag do
+        EG.defs!push cfg.icons
+      EG.div class: \lofe-menu .bag do
+        EG.button onclick: 'app.dl()' .push 'DL'
+      EG.div class: \lofe-body .bag do
         #
         # TODO: saving zone
         #
@@ -46,11 +44,18 @@ export generate = (cfg = void) ->
 # APP ############################################
 
 window.app =
+  dl: !->
+    #
+    # TODO: trigger the download of the modify version
+    #
+    console.log 'launch dl'
+    #
+    # TODO: retrieve-head is already in generate
+    #
+    console.log core.retrieve-head!
+    #
+    #
+    #generate!
+    #
   init: !->
-    #
-    # TODO
-    #
     core.init-EG {tags: app-tags}
-    #
-    console.log 'plop'
-    #

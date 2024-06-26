@@ -5,7 +5,11 @@ global.config = require './config.default' .cfg
 try
   cstm = require './config' .cfg
   config.chok['config.ls'] = type: \cfg
-  for key, value of ctsm then config.projects[key] = value
+  if cstm.server?port? then config.server.port = cstm.server.port
+  if cstm.projects? then for prj, cfg of cstm.projects
+    if config.projects[prj]?
+      for key, value of cstm.projects[prj] then config.projects[prj][key] = value
+    else config.projects[prj] = cfg
 catch
   if e.code is \MODULE_NOT_FOUND then console.log 'no custom config'
   else throw e
