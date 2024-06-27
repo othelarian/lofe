@@ -32,19 +32,17 @@ export generate = (cfg = void) ->
         #
         EG.textarea!
         #
-      #
   core.generate cfg
 
 # APP ############################################
 
 window.app =
   dl: !->
-    a = generate!to-string!
+    a = generate!to-string! |> encodeURIComponent
     attrs =
-      href: 'data:text/html;charset:utf-8,' + encodeURIComponent a
+      href: 'data:text/html;charset:utf-8,' + a
       download: 'lofe-default.html'
-    e = document.createElement \a
-    for k, v of attrs then e.setAttribute k, v
+    e = EG.c-elt \a , attrs
     document.body.appendChild e
     e.click!
     document.body.removeChild e

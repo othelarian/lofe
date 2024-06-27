@@ -23,10 +23,10 @@ option \rel, \r, \Boolean, 'only for release purpose, compress browserified'
 
 # TASKS ##########################################
 
-task \clean, 'remove the `dist` dir', ->
+task \clean, 'remove the `dist` dir', !->
   require \fs .rmSync \dist, { recursive: yes, force: yes }
 
-task \compile, 'compile the selected (basic if none) lofe file', (opts) ->
+task \compile, 'compile the selected (basic if none) lofe file', (opts) !->
   if opts.all? then console.log 'going to compile all'
   else
     if opts.sel?
@@ -41,8 +41,8 @@ task \compile, 'compile the selected (basic if none) lofe file', (opts) ->
   config.release = if opts.rel then opts.rel else no
   require './compile' .compile!
 
-task \list, 'list all lofe files configured and ready to be compile', ->
+task \list, 'list all lofe files configured and ready to be compile', !->
   for key, val of config.projects then console.log "#key => #{val.desc}"
 
-task \serve, 'just launch the server', ->
+task \serve, 'just launch the server', !->
   require './compile' .serve!

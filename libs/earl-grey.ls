@@ -3,7 +3,19 @@ export class EarlGrey
   (@dt = '', @name = '', @attrs = {}, @children = []) ->
     if @dt is '' then @dt = \html; @name = \html
     else if @dt is \html and @name is '' then @name = \html
-  # statics ##################
+  # static methods ###########
+  @c-elt = (tag, attrs, txt, html, svg = void) ->
+    unless svg? then svg = tag in EarlGrey.svg-tags
+    elt =
+      if svg then document.createElementNS 'http://www.w3.org/2000/svg', tag
+      else document.createElement tag
+    for k, v of attrs
+      if svg then elt.setAttributeNS void, k, v
+      else elt.setAttribute k, v
+      if svg and txt? then elt.textContent = txt
+      if txt? then elt.innerText = txt
+      else if html? then elt.innerHTML = html
+    elt
   @compile = (arr) !->
     hdl = (name) ->
       (...opts) -> EarlGrey.tag name, ...opts
@@ -12,7 +24,7 @@ export class EarlGrey
     rec = {children: []}
     for key in <[dt name attrs children]>
       unless json.hasOwnProperty key
-        throw new Error "Missing key in the json: \"#name\""
+        throw new Error "Missing key in the json: \"#key\""
       else if key is \children
         for child, idx in json.children
           if typeof! child is \String then rec.children.push child
@@ -35,7 +47,7 @@ export class EarlGrey
           if opt instanceof EarlGrey then \earl else \attrs
         | \Array  => \arr
         | \String => \tea
-        | otherwise => throw new Error "Invalid arg: #{opt}"
+        | _       => throw new Error "Invalid arg: #{opt}"
     for elt, idx in opts
       tp = check-opt elt
       if tp is \attrs and idx is 0 and not attr-ok
@@ -46,8 +58,12 @@ export class EarlGrey
       else if tp in <[earl tea]> then children.push elt
       else throw new Error "bad argument: arg #{idx + 2}"
     new EarlGrey \tag, name, attrs, children
-  # attributes ###############
+  # static attributes ########
   @no-auto-close = <[script textarea]>
+  @svg-tags = <[
+    animate circle defs filter g image line marker mask path pattern polygon
+    polyline radialGradient rect svg text use view
+  ]>
   # methods ##################
   clean: -> @children = []; @
   delete: (index) ->

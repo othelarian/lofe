@@ -36,9 +36,10 @@ export q-sel = (s, a = no) ->
   if a then document.querySelectorAll s else document.querySelector s
 
 export retrieve-head = ->
-  src-red = (acc, elt) ->
-    acc[elt.getAttribute \id .substring 9] = elt.textContent
-    acc
+  # note: there's an issue with chrome 119-121 on reduce
+  script = {}
+  for elt in q-sel 'head .lofe-script' yes
+    script[elt.getAttribute \id .substring 9] = elt.textContent
   do
     title: q-sel \title .textContent
     style: for e in q-sel('head .lofe-style' yes) then e.textContent
@@ -47,7 +48,7 @@ export retrieve-head = ->
     #
     #content: []
     #
-    script: (q-sel 'head .lofe-script' yes .values!).reduce src-red, {}
+    script: script
 
 export init-EG = (cfg) !->
   EG.compile cfg.tags
