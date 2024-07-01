@@ -7,14 +7,15 @@ export class Oolong
     unless @id? then @id = crypto.randomUUID!
     unless @created? then @created = Oolong.gen-date!
   # static methods ###########
-  @from-json = (json) ->
+  @check = (data, res = void) ->
     dte-reg = /^\d{4}(-\d{2}){2} (\d{2}:){2}\d{2}$/
-    chk = {}
     for key in <[id name tags props created mod content]>
-      unless key of json
-        throw new Error "OOLONG: Missing key in the json: \"#key"
+      unless key of data
+        if key is \id
+          if res? then res.push void
+        else throw new Error "OOLONG: Missing key in the json: \"#key\""
       else
-        v = json[key]
+        v = data[key]
         c = switch key
           | \id
             typeof! v is \String and
@@ -32,8 +33,10 @@ export class Oolong
           | \content => yes
           | _ => throw new Error "OOLONG: Unexpected key in the json: \"#key\""
         unless c then throw new Error "OOLONG: Bad input in \"#key\""
-        else chk[key] = v
-    new Oolong chk.id, chk.name, chk.tags, chk.props, chk.created, chk.mod, chk.content
+        else if res? then res.push v
+    if res? then res else data
+  @from-json = (json) -> new Oolong ...(Oolong.check json, [])
+  @from-string = Oolong.from-json << JSON.parse
   @gen-date = ->
     dte = new Date!toLocaleString! |> /^(\d{2})\/(\d{2})\/(\d{4})(.{9})$/.exec
     "#{dte.3}-#{dte.2}-#{dte.1}#{dte.4}"
@@ -48,6 +51,5 @@ export class Oolong
       created: @created
       mod: @mod
       content: @content
-  to-string: ->
-    @to-json! |> JSON.stringify
+  to-string: -> @to-json! |> JSON.stringify
   # attributes ###############

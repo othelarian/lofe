@@ -3,6 +3,7 @@
 require! {
   bach, fs, path, sass
   '@othelarian/livescript': ls
+  './libs/oolong': {Oolong}
 }
 
 # INTERNALS ######################################
@@ -46,15 +47,44 @@ create-dir = (dir, cb) !-->
   if er?
     unless er.code is \EEXIST then cb er else cb void 1
 
+data-handler =
+  check-array: (arr, rec = yes, ctx = void) ->
+    arr.flatMap (data) -> switch typeof! data
+      | \String
+        unless rec then data-handler.throw-error \rec, ctx
+        data-handler.get-from-file data
+      | \Object => Oolong.check data
+      | _       => data-handler.throw-error \format that
+  throw-error: (tp, ctx) !->
+    msg = switch tp
+      | \file   => "file \"#ctx\" contains invalid data"
+      | \format => "data format not valid! (type: #ctx)"
+      | \rec    => "trying to recursively load file into file \"#ctx\""
+    throw new Error "DATA: #msg"
+  get-from-file: (pth) ->
+    clear-cache pth # if in dev mode, needed for reloading
+    data = require pth .data
+    switch typeof! data
+      | \Array  => data-handler.check-array data, no, pth
+      | \Object => [Oolong.check data]
+      | _       => data-handler.throw-error \file pth
+  read-data: (data) ->
+    switch typeof! data
+      | \String => data-handler.get-from-file data
+      | \Array  => data-handler.check-array data
+      | \Object => [Oolong.check data]
+      | _       => fb that
+
 err-cb = (err) !-> if err? then console.log err
 
-execute = (project, target, cfg, cb) !-->>
+execute = (prj, target, cfg, cb) !-->>
+  console.log "Compiling \"#target\" ..."
+  project = config.projects[prj]
   try
     out = switch cfg.type
       | \sass => sass.compile target, { style: \compressed } .css
       | \core
-        if cfg.icons?
-          config.projects[project].cfg[target].icons = get-icons cfg.icons
+        if cfg.icons? then project.cfg[target]icons = get-icons cfg.icons
         fallthrough
       | \lib => compile-ls target
       | \content
@@ -68,14 +98,14 @@ execute = (project, target, cfg, cb) !-->>
       | _
         msg = "[ERROR]: missing type in '#target' in project '#project'"
         throw new Error msg
-    switch config.projects[project].type
-      | \mono
+    switch project.type
+      | \quine
         if cfg.type is \core # only core type can generate an output
           global.window = app: void # workaround to avoid window.app error
-          config.projects[project].cfg[target].script['core'] = out
-          core-cfg = config.projects[project].cfg[target]
+          project.cfg[target]script['core'] = out
+          core-cfg = project.cfg[target]
           #
-          # TODO: if there is icons key in config, then load icons
+          # TODO: check here for modules
           #
           #
           clear-cache "./#target"
@@ -86,18 +116,16 @@ execute = (project, target, cfg, cb) !-->>
           switch cfg.type
             | \content
               #
-              #config.projects[project].cfg[cfg.link].content
+              #project..cfg[cfg.link].content
               #
               # TODO: handle compiling content
               #
               void
               #
             | \lib
-              for lk in cfg.link
-                config.projects[project].cfg[lk].script[cfg.id] = out
+              for lk in cfg.link then project.cfg[lk].script[cfg.id] = out
             | \sass
-              for lk in cfg.link
-                config.projects[project].cfg[lk].style[target] = out
+              for lk in cfg.link then project.cfg[lk].style[target] = out
       | _
         msg = "[ERROR]: missing type in project '#project'"
         throw new Error msg
@@ -117,19 +145,26 @@ get-icons = (list) ->
 
 setup-prj = (prj) ->
   console.log "setup project '#prj'"
-  config.projects[prj].out = {}
-  config.projects[prj].cfg = {}
+  project = config.projects[prj]
+  project.out = {}
+  project.cfg = {}
   prep = []
   out = []
-  for fl, cfg of config.projects[prj]src
+  for fl, cfg of project.src
     p = execute prj, fl, cfg
     if cfg.type is \core
-      config.projects[prj]cfg[fl] =
-        script: {}, style: {}, content: {}, title: cfg.title ? 'No title'
+      project.cfg[fl] =
+        script: {}, style: {}, data: [], modules: {}
+        title: cfg.title ? 'No title'
       out.push p
     else prep.push p
-    config.chok[fl] = type: cfg.type, project: prj
-  prep.concat out
+    if config.dev then config.chok[fl] = type: cfg.type, project: prj
+  if \data of project then for fl, data of project.data
+    project.cfg[fl]data = data-handler.read-data data
+  if config.dev and \requires of project
+    for fl, cfg of project.requires
+      config.chok[fl] = type: \req, project: prj, link: cfg
+  prep ++ out
 
 watch = (cb) !->
   console.log 'start watching'
@@ -144,16 +179,21 @@ watch = (cb) !->
       #
       console.log 'altering config (not implemented)'
       #
-      #
     else if pth in watchlist
       console.log "reload #pth"
+      m = []
       prj = config.chok[pth]project
-      cfg = config.projects[prj]src[pth]
-      m = [execute prj, pth, cfg]
-      unless config.chok[pth]type is \core
-        console.log "=> link: #{cfg.link}"
-        for lk in cfg.link
+      if config.chok[pth]type is \req
+        clear-cache "./#pth"
+        for lk in config.chok[pth]link
           m.push(execute prj, lk, config.projects[prj]src[lk])
+      else
+        cfg = config.projects[prj]src[pth]
+        m.push(execute prj, pth, cfg)
+        unless config.chok[pth]type is \core
+          console.log "=> link: #{cfg.link}"
+          for lk in cfg.link
+            m.push(execute prj, lk, config.projects[prj]src[lk])
       (bach.series m) err-cb
     else console.log "[ERROR]: WATCHER => #pth not find in watchlist!"
   cb void 3

@@ -1,21 +1,31 @@
 # REQUIRES #######################################
 
-EG = require './earl-grey' .EarlGrey
+require! {
+  './earl-grey': {EarlGrey: EG}
+  #'./oolong': {Oolong}
+}
 
 # INTERNALS ######################################
 
 gen-head = (data) ->
+  data-attrs =
+    type: \application/json
+    class: \lofe-data
   hd = EG.head!bag do
     EG.title!push data.title
     EG.meta charset: \utf-8
     EG.meta {name: \viewport, content: 'width=device-width,initial-scale=1'}
+    # adding data
     EG.script {type: 'text/javascript'} .push 'Lofe = {};'
+    # adding Lofe global (for some modules)
+    EG.script data-attrs .push(JSON.stringify data.data)
+  # adding styles
   for _, style of data.style
     hd.push(EG.style class: \lofe-style .push style)
   #
-  # TODO: add content
+  # TODO: add modules
   #
-  #for content in data.content then
+  #for module in data.modules then
   #
   for idx, script of data.script
     attrs = id: "lofe-src-#idx", type: \text/javascript, class: \lofe-script
@@ -25,6 +35,16 @@ gen-head = (data) ->
 # EXPORTS ########################################
 
 export EG = EG
+
+export dl = (eg) !->
+  a = eg.tostring! |> encodeURIComponent
+  attrs =
+    href: 'data:text/html;charset:utf-8,' + a
+    download: 'lofe-default.html'
+  e = EG.c-elt \a , attrs
+  document.body.appendChild e
+  e.click!
+  document.body.removeChild e
 
 export generate = (cfg) ->
   if cfg.tags? then EG.compile cfg.tags
@@ -43,10 +63,10 @@ export retrieve-head = ->
   do
     title: q-sel \title .textContent
     style: for e in q-sel('head .lofe-style' yes) then e.textContent
+    data: for e in q-sel('head .lofe-data' yes) then e.textContent
     #
-    # TODO: retrieving content schard
+    # TODO: retrieving module
     #
-    #content: []
     #
     script: script
 

@@ -61,8 +61,8 @@ export class EarlGrey
   # static attributes ########
   @no-auto-close = <[script textarea]>
   @svg-tags = <[
-    animate circle defs filter g image line marker mask path pattern polygon
-    polyline radialGradient rect svg text use view
+    animate circle defs filter g image line linearGradient marker mask path
+    pattern polygon polyline radialGradient rect stop svg symbol text use view
   ]>
   # methods ##################
   clean: -> @children = []; @
