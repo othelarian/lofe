@@ -8,13 +8,17 @@ feather-dl =
     #
     ...
     #
+  init: !->
+    #
+    # TODO: init the feather-dl module
+    #
+    console.log 'init the feather-dl module'
+    #
+    void
+    #
   save: !->
     #
     # TODO: save the file to the server
     #
     ...
     #
-
-# EXPORT/EXTERNAL ################################
-
-Lofe.feather-dl = feather-dl

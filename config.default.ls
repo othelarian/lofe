@@ -1,11 +1,12 @@
 # MODULES ########################################
 
 modules =
-  admin: {} # TODO: admin module
-  feather-dl: {}
-    #
-    # TODO: feather-dl plugin
-    #
+  #admin: {}
+  'feather-dl':
+    name: \feather-dl
+    src:
+      'modules/common/feather-dl/feather-dl.ls': {type: 'ls'}
+  #notifs: {}
 
 # PROJECTS #######################################
 
@@ -18,13 +19,9 @@ projects =
         type: \core, out: 'default.html', title: 'Lofe - default'
         icons: <[Moon Sun]>
       'src/style.sass': {type: \sass, link: ['src/default.ls']}
-      #'a/lib.ls': {type: \lib, link: 'src/default.ls', id: 'an-id'}
-    modules: {}
-      #
-      #
-      #
-      # TODO: icons into content?
-      #
+      #'a/lib.ls': {type: \ls, link: 'src/default.ls', id: 'an-id'}
+    modules:
+      'feather-dl': ['src/default.ls']
     data:
       'src/default.ls': './data/default-data'
       #'src/default.ls': {...Oolong object, as a json...}

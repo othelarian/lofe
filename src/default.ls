@@ -43,10 +43,28 @@ export generate = (cfg = void) ->
 
 # LOFE APP #######################################
 
-Lofe.dl = !-> core.dl generate!
+App =
+  dl: !-> core.dl generate!
+  init: !->
+    #
+    # TODO: add the module init
+    #
+    #
+    core.init-EG {tags: app-tags}
+    try
+      #
+      # TODO: load modules here
+      #
+      Lofe.data = core.get-data!
+    catch
+      #
+      # TODO: handle if something is corrupted
+      #
+      console.log e
+      #
+    #
 
-Lofe.init = !->
-  #
-  # TODO: add the module init
-  #
-  core.init-EG {tags: app-tags}
+# LOFE SET UP ####################################
+
+if window.Lofe is void then void
+else for k, v of App then window.Lofe[k] = v

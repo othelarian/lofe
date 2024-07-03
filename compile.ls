@@ -77,21 +77,27 @@ data-handler =
 
 err-cb = (err) !-> if err? then console.log err
 
-execute = (prj, target, cfg, cb) !-->>
-  console.log "Compiling \"#target\" ..."
-  project = config.projects[prj]
+execute = (type, prj, target, cfg, cb) !-->>
+  project = switch type
+    | \project
+      console.log "Compiling \"#target\" ..."
+      config.projects[prj]
+    | \module
+      console.log "Compiling module \"#prj\" ..."
+      config.modules[prj]
   try
     out = switch cfg.type
       | \sass => sass.compile target, { style: \compressed } .css
       | \core
         if cfg.icons? then project.cfg[target]icons = get-icons cfg.icons
         fallthrough
-      | \lib => compile-ls target
-      | \content
+      | \ls => compile-ls target
+      | \mod
         #
         # TODO: if there's some icons for a content, load them here?
         #
         # TODO: handle content compilation
+        #
         #
         ...
         #
@@ -143,15 +149,19 @@ get-icons = (list) ->
     "<symbol id=\"#{h}\">" + (s * '') + '</symbol>'
   (list.map (elt) -> clip elt, lucide[elt]) * ''
 
+# SETUP PROJECTS #################################
+
 setup-prj = (prj) ->
   console.log "setup project '#prj'"
   project = config.projects[prj]
   project.out = {}
   project.cfg = {}
+  ld-mods = []
+  mods = []
   prep = []
   out = []
   for fl, cfg of project.src
-    p = execute prj, fl, cfg
+    p = execute \project, prj, fl, cfg
     if cfg.type is \core
       project.cfg[fl] =
         script: {}, style: {}, data: [], modules: {}
@@ -159,12 +169,52 @@ setup-prj = (prj) ->
       out.push p
     else prep.push p
     if config.dev then config.chok[fl] = type: cfg.type, project: prj
+  if \modules of project then for module, outputs of project.modules
+      unless module of config.modules
+        throw new Error "[ERROR]: module \"#module\" not found"
+      unless module in ld-mods
+        ld-mods.push module
+        config.modules[module]out = {}
+        if config.dev then config.modules[module]prjs = {"#prj": outputs}
+        for fl, cfg of config.modules[module]src
+          if config.dev then config.chok[fl] = type: 'module', module: module
+          mods.push(execute \module, module, fl, cfg)
+        mods.push(execute \module, module, \core, {type: 'mod'})
+      else if config.dev then config.modules[module]prjs[prj] = outputs
   if \data of project then for fl, data of project.data
     project.cfg[fl]data = data-handler.read-data data
   if config.dev and \requires of project
     for fl, cfg of project.requires
       config.chok[fl] = type: \req, project: prj, link: cfg
-  prep ++ out
+  mods ++ prep ++ out
+
+# WATCH ##########################################
+
+watch-module = (pth) !->
+  module = config.chok[pth]module
+  m =
+    (execute \module, module, pth, config.modules[module]src[pth])
+    (execute \module, module, \core, void)
+  for prj, out of config.modules[module]prjs
+    for fl in out
+      m.push(execute \project, prj, fl, config.projects[prj]src[fl])
+  (bach.series m) err-cb
+
+watch-project = (pth) !->
+  m = []
+  prj = config.chok[pth]project
+  if config.chok[pth]type is \req
+    clear-cache "./#pth"
+    for lk in config.chok[pth]link
+      m.push(execute \project, prj, lk, config.projects[prj]src[lk])
+  else
+    cfg = config.projects[prj]src[pth]
+    m.push(execute \project, prj, pth, cfg)
+    unless config.chok[pth]type is \core
+      console.log "=> link: #{cfg.link}"
+      for lk in cfg.link
+        m.push(execute \project, prj, lk, config.projects[prj]src[lk])
+  (bach.series m) err-cb
 
 watch = (cb) !->
   console.log 'start watching'
@@ -181,20 +231,8 @@ watch = (cb) !->
       #
     else if pth in watchlist
       console.log "reload #pth"
-      m = []
-      prj = config.chok[pth]project
-      if config.chok[pth]type is \req
-        clear-cache "./#pth"
-        for lk in config.chok[pth]link
-          m.push(execute prj, lk, config.projects[prj]src[lk])
-      else
-        cfg = config.projects[prj]src[pth]
-        m.push(execute prj, pth, cfg)
-        unless config.chok[pth]type is \core
-          console.log "=> link: #{cfg.link}"
-          for lk in cfg.link
-            m.push(execute prj, lk, config.projects[prj]src[lk])
-      (bach.series m) err-cb
+      if config.chok[pth]type is \module then watch-module pth
+      else watch-project pth
     else console.log "[ERROR]: WATCHER => #pth not find in watchlist!"
   cb void 3
 

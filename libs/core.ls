@@ -2,7 +2,7 @@
 
 require! {
   './earl-grey': {EarlGrey: EG}
-  #'./oolong': {Oolong}
+  './oolong': {Oolong}
 }
 
 # INTERNALS ######################################
@@ -45,6 +45,10 @@ export dl = (eg) !->
   document.body.appendChild e
   e.click!
   document.body.removeChild e
+
+export get-data = ->
+  (q-sel 'head .lofe-data' .textContent |> JSON.parse)
+    .map Oolong.from-json
 
 export generate = (cfg) ->
   if cfg.tags? then EG.compile cfg.tags
